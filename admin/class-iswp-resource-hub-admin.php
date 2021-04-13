@@ -112,7 +112,7 @@ class Iswp_Resource_Hub_Admin
     {
         // Custom post type
         $labels = [
-            'name'                => _x('Resource', 'Post Type General Name'),
+            'name'                => _x('Resources', 'Post Type General Name'),
             'singular_name'       => _x('Resource', 'Post Type Singular Name'),
             'menu_name'           => __('Resources'),
             'parent_item_colon'   => __('Parent Resource'),
@@ -136,7 +136,7 @@ class Iswp_Resource_Hub_Admin
                 'title',
                 'editor',
                 'thumbnail',
-                'revisions',
+                //'revisions',
                 //'excerpt',
                 //'author',
                 //'comments',
@@ -197,6 +197,9 @@ class Iswp_Resource_Hub_Admin
 
     public function metabox_render()
     {
+        $post_id = get_the_ID();
+        $resource_link = get_post_meta($post_id, '_resource_link', true);
+        $resource_year = get_post_meta($post_id, '_resource_year', true);
         ?>
         <div>
             <strong>
@@ -205,7 +208,7 @@ class Iswp_Resource_Hub_Admin
                 </label>
             </strong>
             <span style="display:inline-block; margin-right: 10px"></span>
-            <input type="text" name="resource_year" id="resource_year" style="width:400px"/>
+            <input value="<?=$resource_year?>" type="text" name="resource_year" id="resource_year" style="width:400px"/>
 
             <div style="margin-top:5px;">
                 Enter the 4-digit full year.
@@ -221,7 +224,7 @@ class Iswp_Resource_Hub_Admin
                 </label>
             </strong>
             <span style="display:inline-block; margin-right: 10px"></span>
-            <input type="text" name="resource_link" id="resource_link" style="width:400px"/>
+            <input value="<?=$resource_link?>" type="text" name="resource_link" id="resource_link" style="width:400px"/>
 
             <div style="margin-top:5px;">
                 Input the link manually or <a href="#" id="media_lib_open">select a file from the media library.</a>
@@ -261,6 +264,29 @@ class Iswp_Resource_Hub_Admin
         });
         </script>
         <?php
+    }
+
+    public function metabox_save()
+    {
+        $post_id = $_POST['post_ID'];
+
+        $resource_link = $_POST['resource_link'];
+        if ($this->shouldSaveField($resource_link)) {
+            update_post_meta($post_id, '_resource_link', $resource_link);
+        }
+
+        $resource_year = $_POST['resource_year'];
+        if ($this->shouldSaveField($resource_year)) {
+            update_post_meta($post_id, '_resource_year', $resource_year);
+        }
+    }
+
+    public function shouldSaveField($field)
+    {
+        $isSet = isset($field);
+        $isNonEmpty = !empty($field);
+
+        return ($isSet && $isNonEmpty);
     }
 
 }

@@ -160,8 +160,11 @@ class Iswp_Resource_Hub {
 
         // Register the custom post type
         $this->loader->add_action('init', $plugin_admin, 'create_cpt_resource');
-        // Register the custom post type's metabox
+
+        // Register the custom post type's metabox and its saving function
         $this->loader->add_action('add_meta_boxes', $plugin_admin, 'metabox_register');
+        $this->loader->add_action('save_post', $plugin_admin, 'metabox_save');
+
 
 	}
 
