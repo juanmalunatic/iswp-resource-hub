@@ -116,12 +116,92 @@ class Iswp_Resource_Hub_Public
         wp_enqueue_style('iswp_reshub_css_public');
         wp_enqueue_script('iswp_reshub_js_public');
 
-        // Handle IDs and convert to integers
-        $ids = explode(',', trim($atts['show_ids']));
-        $ids = array_map(function($n){return (int)$n;}, $ids);
+        // Handle IDs passed in the shortcode and convert to integers
+        $hub_id = $atts['id'];
 
-        $a = "b";
-        return "Lmao";
+        $post_ids = explode(',', trim($atts['resources']));
+        $post_ids = array_map(function($n){return (int)$n;}, $post_ids);
+
+        return $this->resource_hub_render($hub_id, $post_ids);
+    }
+
+    public function resource_hub_render(string $hub_id, array $post_ids = [])
+    {
+        // To avoid multiple network calls, this plugin is output as a single chunk of text
+        ob_start();
+
+        // First, we render the HTML + CSS structure that will be populated via JSON.
+        $dir = plugin_dir_path( __FILE__ );
+        $file_path = "partials/iswp-resource-hub-public-display.php";
+        $this->include_with_variables($dir . $file_path, ['hub_id' => $hub_id]);
+
+        // Then, the JSON payload is output
+        $json_data = $this->get_resources_list($post_ids);
+        echo "
+        <script>
+            if (window.reshub_json === undefined) {
+                window.reshub_json = [];
+            }
+            window.reshub_json['{$hub_id}'] = {$json_data};
+        </script>";
+
+        // The rest of the JS is already output using wp_enqueue_script (somewhere else in this file).
+
+        // Return everything
+        return ob_get_clean();
+    }
+
+    function include_with_variables($filePath, $variables = array(), $print = true)
+    {
+        $output = NULL;
+        if(file_exists($filePath)){
+            extract($variables);
+            ob_start();
+            include $filePath;
+            $output = ob_get_clean();
+        }
+        if ($print) {
+            print $output;
+        }
+        return $output;
+    }
+
+    public function get_resources_list($post_ids)
+    {
+        // Find posts via WP_Query
+        $query = new WP_Query([
+            'post_type' => 'resources',
+            'post__in'  => $post_ids,
+            'orderby' => 'post_name__in', // Keep the given order
+            'suppress_filters' => false,
+            'posts_per_page' => 18,
+        ]);
+        $posts = $query->posts;
+
+        // Iterate posts and create the JSON structure
+        $data_all = [];
+        foreach ($posts as $post) {
+
+            // Basic data
+            $data_post['id']     = $post->ID;
+            $data_post['title']       = $post->post_title;
+            $data_post['description'] = $post->post_content;
+            $data_post['image']       = get_the_post_thumbnail_url($post->ID, 'full');
+            $data_post['year']        = get_post_meta($post->ID, '_resource_year', true);
+            $data_post['link']        = get_post_meta($post->ID, '_resource_link', true);
+
+            // Keywords data
+            $taxonomy_terms = wp_get_object_terms($post->ID, ['resource_keywords']);
+            $keywords = [];
+            foreach($taxonomy_terms as $taxonomy_term) {
+                $keywords[] = $taxonomy_term->name;
+            }
+            $data_post['keywords'] = implode(', ', $keywords);
+
+            // Add data to array
+            $data_all[] = $data_post;
+        }
+        return json_encode($data_all);
     }
 
 }
