@@ -110,6 +110,7 @@ class Iswp_Resource_Hub_Admin
 
     public function create_cpt_resource()
     {
+        // Custom post type
         $labels = [
             'name'                => _x('Resource', 'Post Type General Name'),
             'singular_name'       => _x('Resource', 'Post Type Singular Name'),
@@ -131,9 +132,18 @@ class Iswp_Resource_Hub_Admin
             'description'         => __('Resources'),
             'labels'              => $labels,
             // Features this CPT supports in Post Editor
-            'supports'            => array( 'title', 'editor', 'excerpt', 'author', 'thumbnail', 'comments', 'revisions', 'custom-fields', ),
+            'supports'            => [
+                'title',
+                'editor',
+                'thumbnail',
+                'revisions',
+                //'excerpt',
+                //'author',
+                //'comments',
+                //'custom-fields'
+            ],
             // You can associate this CPT with a taxonomy or custom taxonomy.
-            // 'taxonomies'          => array('genres'),
+            'taxonomies'          => array('resource_keywords'),
             /* A hierarchical CPT is like Pages and can have
             * Parent and child items. A non-hierarchical CPT
             * is like Posts.
@@ -154,9 +164,103 @@ class Iswp_Resource_Hub_Admin
             'menu_icon'           => 'dashicons-book',
         ];
 
-        // Registering your Custom Post Type
         register_post_type( 'resources', $args );
 
+        // Custom taxonomy to store keywords
+        register_taxonomy(
+            'resource_keywords',
+            'resources',
+            [
+                "label" => 'Resource Keywords',
+                "labels" => [
+                    "name" => 'Resource Keywords',
+                    "singular_name" => 'Resource Keyword',
+                    "separate_items_with_commas" => 'Separate keywords with commas',
+                    "choose_from_most_used" => 'Choose from most used keywords',
+                ]
+            ]
+        );
+    }
+
+    public function metabox_register()
+    {
+        // Add metabox and custom fields
+        add_meta_box(
+            'resources_metabox',
+            'Additional Information',
+            [$this, 'metabox_render'],
+            'resources',
+            'normal',
+            'high'
+        );
+    }
+
+    public function metabox_render()
+    {
+        ?>
+        <div>
+            <strong>
+                <label for="resource_year">
+                    Year:
+                </label>
+            </strong>
+            <span style="display:inline-block; margin-right: 10px"></span>
+            <input type="text" name="resource_year" id="resource_year" style="width:400px"/>
+
+            <div style="margin-top:5px;">
+                Enter the 4-digit full year.
+            </div>
+        </div>
+
+        <div style="margin-bottom:15px;"></div>
+
+        <div>
+            <strong>
+                <label for="resource_link">
+                    Link:
+                </label>
+            </strong>
+            <span style="display:inline-block; margin-right: 10px"></span>
+            <input type="text" name="resource_link" id="resource_link" style="width:400px"/>
+
+            <div style="margin-top:5px;">
+                Input the link manually or <a href="#" id="media_lib_open">select a file from the media library.</a>
+            </div>
+
+        </div>
+        <?php
+        $this->metabox_javascript();
+    }
+
+    public function metabox_javascript()
+    {
+        ?>
+        <script>
+        jQuery(document).ready( function($) {
+            $("#media_lib_open").on('click', function(e){
+                // Remove click event
+                e.preventDefault();
+
+                // Open image frame
+                image_frame = wp.media({
+                    title: 'Select Media',
+                    multiple : false,
+                    //library : {type : 'image',}
+                });
+
+                // Handle selection
+                image_frame.on('select',function() {
+                    var selection = image_frame.state().get('selection').first();
+                    console.log(JSON.parse(JSON.stringify(selection)));
+                    var image_url = selection.toJSON().url;
+                    $("#resource_link").attr("value", image_url);
+                });
+
+                image_frame.open();
+            });
+        });
+        </script>
+        <?php
     }
 
 }

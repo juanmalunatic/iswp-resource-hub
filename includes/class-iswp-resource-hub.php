@@ -158,8 +158,10 @@ class Iswp_Resource_Hub {
 		//$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		//$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
-        // Register the custom post types
+        // Register the custom post type
         $this->loader->add_action('init', $plugin_admin, 'create_cpt_resource');
+        // Register the custom post type's metabox
+        $this->loader->add_action('add_meta_boxes', $plugin_admin, 'metabox_register');
 
 	}
 
