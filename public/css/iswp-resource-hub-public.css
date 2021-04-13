@@ -104,7 +104,7 @@
     font-weight: bold;
     margin-top: 15px;
     margin-bottom: 15px;
-    font-size: 1.1rem;
+    font-size: 1.8rem !important;
 }
 
 .site-content a.reshub_card_link {
@@ -116,7 +116,7 @@
     width: 100%;
     background-size: cover;
     background-position: center center;
-    height: 200px;
+    height: 250px;
 }
 
 .reshub_card_texts strong {
